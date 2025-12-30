@@ -23,37 +23,4 @@ This framework focuses on:
 
 ---
 
-## 📁 Project Structure
 
-📦 mobility-framework
-│
-├─ 📁 src
-│   ├─ MainLoader.lua
-│   │
-│   ├─ 📁 Modules
-│   │   ├─ UIManager.lua
-│   │   ├─ ThemeManager.lua
-│   │   ├─ DragManager.lua
-│   │   ├─ SaveManager.lua
-│   │   ├─ Dash.lua
-│   │   ├─ LockOn.lua
-│   │   ├─ RadialMenu.lua
-│   │   └─ Indicators.lua
-│   │
-│   └─ 📁 UI
-│       ├─ MainGui.lua
-│       ├─ Tabs.lua
-│       └─ Components.lua
-│
-├─ 📁 config
-│   ├─ Settings.lua
-│   ├─ Theme.lua
-│   ├─ Keybinds.lua
-│   └─ SavedUI.lua
-│
-├─ 📁 build
-│   └─ packed.lua          # single-file version (optional)
-│
-├─ README.md
-├─ LICENSE
-└─ .gitignore
