@@ -1,3 +1,68 @@
+-- Delta Config Bootstrap
+local ROOT = "Delta/Deltas"
+local CONFIG = ROOT .. "/Config"
+
+if not isfolder("Delta") then
+    makefolder("Delta")
+end
+
+if not isfolder(ROOT) then
+    makefolder(ROOT)
+end
+
+if not isfolder(CONFIG) then
+    makefolder(CONFIG)
+end
+
+local function ensureFile(path, content)
+    if not isfile(path) then
+        writefile(path, content)
+    end
+end
+
+ensureFile(CONFIG .. "/default.json", [[
+{
+  "dashEnabled": true,
+  "dashCooldown": 1.2,
+  "maxSpeed": 50,
+  "lockOn": true
+}
+]])
+
+ensureFile(CONFIG .. "/pvp.json", [[
+{
+  "dashCooldown": 0.6,
+  "maxSpeed": 65,
+  "lockOn": true
+}
+]])
+
+ensureFile(CONFIG .. "/speed.json", [[
+{
+  "maxSpeed": 120,
+  "dashCooldown": 0.2
+}
+]])
+
+ensureFile(CONFIG .. "/test.json", [[
+{
+  "dashEnabled": false,
+  "maxSpeed": 30
+}
+]])
+
+local HttpService = game:GetService("HttpService")
+
+local function loadConfig(name)
+    local path = CONFIG .. "/" .. name .. ".json"
+    if isfile(path) then
+        return HttpService:JSONDecode(readfile(path))
+    end
+    return nil
+end
+
+local Config = loadConfig("default")
+
 --// SERVICES
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
