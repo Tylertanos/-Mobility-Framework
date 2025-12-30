@@ -1,0 +1,275 @@
+--// SERVICES
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local Http = game:GetService("HttpService")
+local DebrisSvc = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
+
+--// PLAYER
+local plr = Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
+local root = char:WaitForChild("HumanoidRootPart")
+local cam = workspace.CurrentCamera
+
+--// THEME
+local Theme = {
+	Primary = Color3.fromRGB(30,30,35),
+	Accent  = Color3.fromRGB(0,170,255),
+	Text    = Color3.fromRGB(235,235,235),
+}
+
+--// PROFILES (defaults if files don’t exist)
+local Profiles = {
+	Default = { DashEnabled=true, Keybind="Q", LockOn=false, DashPower=85, DashCD=1.2 },
+	PvP     = { DashEnabled=true, Keybind="Q", LockOn=true,  DashPower=78, DashCD=1.0 },
+	Speed   = { DashEnabled=true, Keybind="Q", LockOn=false, DashPower=110,DashCD=0.9 },
+	Test    = { DashEnabled=true, Keybind="Q", LockOn=true,  DashPower=95, DashCD=0.5 }
+}
+
+--// SAVE SYSTEM
+local Save = { Folder="MobilityExploit", Profile="Default" }
+if makefolder and not isfolder(Save.Folder) then makefolder(Save.Folder) end
+local function path() return Save.Folder.."/"..Save.Profile..".json" end
+
+local Config = {}
+local function loadProfile(name)
+	Save.Profile = name
+	if isfile and isfile(path()) then
+		Config = Http:JSONDecode(readfile(path()))
+	else
+		Config = table.clone(Profiles[name])
+		if writefile then writefile(path(), Http:JSONEncode(Config)) end
+	end
+end
+local function saveProfile()
+	if writefile then writefile(path(), Http:JSONEncode(Config)) end
+end
+loadProfile("Default")
+
+--// UI
+local gui = Instance.new("ScreenGui", plr.PlayerGui)
+gui.Name = "MobilityUI"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.fromScale(0.24,0.12)
+frame.Position = UDim2.fromScale(0.38,0.8)
+frame.BackgroundColor3 = Theme.Primary
+frame.Active = true
+frame.Draggable = true
+
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Theme.Accent
+
+local label = Instance.new("TextLabel", frame)
+label.Size = UDim2.fromScale(1,0.6)
+label.BackgroundTransparency = 1
+label.TextColor3 = Theme.Text
+label.Font = Enum.Font.GothamBold
+label.TextScaled = true
+
+local sub = Instance.new("TextLabel", frame)
+sub.Position = UDim2.fromScale(0,0.6)
+sub.Size = UDim2.fromScale(1,0.4)
+sub.BackgroundTransparency = 1
+sub.TextColor3 = Theme.Text
+sub.Font = Enum.Font.Gotham
+sub.TextScaled = true
+
+--// BLUR
+local blur = Instance.new("BlurEffect", Lighting)
+blur.Size = 10
+
+--// DEBRIS FX
+local function debris(pos)
+	for i=1,6 do
+		local p = Instance.new("Part")
+		p.Size = Vector3.new(.2,.2,.2)
+		p.Position = pos
+		p.Anchored = false
+--// SERVICES
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local Http = game:GetService("HttpService")
+local DebrisSvc = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
+
+--// PLAYER
+local plr = Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
+local root = char:WaitForChild("HumanoidRootPart")
+local cam = workspace.CurrentCamera
+
+--// THEME
+local Theme = {
+	Primary = Color3.fromRGB(30,30,35),
+	Accent  = Color3.fromRGB(0,170,255),
+	Text    = Color3.fromRGB(235,235,235)
+}
+
+--// PROFILES (defaults if files don’t exist)
+local Profiles = {
+	Default = { DashEnabled=true, Keybind="Q", LockOn=false, DashPower=85, DashCD=1.2 },
+	PvP     = { DashEnabled=true, Keybind="Q", LockOn=true,  DashPower=78, DashCD=1.0 },
+	Speed   = { DashEnabled=true, Keybind="Q", LockOn=false, DashPower=110,DashCD=0.9 },
+	Test    = { DashEnabled=true, Keybind="Q", LockOn=true,  DashPower=95, DashCD=0.5 }
+}
+
+--// SAVE SYSTEM
+local Save = { Folder="MobilityExploit", Profile="Default" }
+if makefolder and not isfolder(Save.Folder) then makefolder(Save.Folder) end
+local function path() return Save.Folder.."/"..Save.Profile..".json" end
+
+local Config = {}
+local function loadProfile(name)
+	Save.Profile = name
+	if isfile and isfile(path()) then
+		Config = Http:JSONDecode(readfile(path()))
+	else
+		Config = table.clone(Profiles[name])
+		if writefile then writefile(path(), Http:JSONEncode(Config)) end
+	end
+end
+local function saveProfile()
+	if writefile then writefile(path(), Http:JSONEncode(Config)) end
+end
+loadProfile("Default")
+
+--// UI
+local gui = Instance.new("ScreenGui", plr.PlayerGui)
+gui.Name = "MobilityUI"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.fromScale(0.24,0.12)
+frame.Position = UDim2.fromScale(0.38,0.8)
+frame.BackgroundColor3 = Theme.Primary
+frame.Active = true
+frame.Draggable = true
+
+local stroke = Instance.new("UIStroke", frame)
+stroke.Color = Theme.Accent
+
+local label = Instance.new("TextLabel", frame)
+label.Size = UDim2.fromScale(1,0.6)
+label.BackgroundTransparency = 1
+label.TextColor3 = Theme.Text
+label.Font = Enum.Font.GothamBold
+label.TextScaled = true
+
+local sub = Instance.new("TextLabel", frame)
+sub.Position = UDim2.fromScale(0,0.6)
+sub.Size = UDim2.fromScale(1,0.4)
+sub.BackgroundTransparency = 1
+sub.TextColor3 = Theme.Text
+sub.Font = Enum.Font.Gotham
+sub.TextScaled = true
+
+--// BLUR
+local blur = Instance.new("BlurEffect", Lighting)
+blur.Size = 10
+
+--// DEBRIS FX
+local function debris(pos)
+	for i=1,6 do
+		local p = Instance.new("Part")
+		p.Size = Vector3.new(.2,.2,.2)
+		p.Position = pos
+		p.Anchored = false
+		p.CanCollide = false
+		p.Material = Enum.Material.Neon
+		p.Color = Theme.Accent
+		p.Velocity = Vector3.new(math.random(-15,15), math.random(10,25), math.random(-15,15))
+		p.Parent = workspace
+		DebrisSvc:AddItem(p, .6)
+	end
+end
+
+--// LOCK-ON + LIGHT PREDICTION
+local LockOn = { Target=nil }
+local function findTarget()
+	local best, dist = nil, 70
+	for _,v in ipairs(workspace:GetChildren()) do
+		if v ~= char and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") then
+			local d = (v.HumanoidRootPart.Position - root.Position).Magnitude
+			if d < dist then dist = d; best = v end
+		end
+	end
+	return best
+end
+
+RS.RenderStepped:Connect(function(dt)
+	if Config.LockOn and LockOn.Target then
+		local hrp = LockOn.Target:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			local predicted = hrp.Position + hrp.Velocity * 0.08
+			cam.CFrame = CFrame.new(cam.CFrame.Position, predicted)
+	end)
+end
+
+--// MOBILITY
+local lastDash = 0
+local function dash()
+	if not Config.DashEnabled then return end
+	if tick() - lastDash < Config.DashCD then return end
+	lastDash = tick()
+label.Text = "DASH"
+	local dir = cam.CFrame.LookVector
+	local bv = Instance.new("BodyVelocity", root)
+	bv.MaxForce = Vector3.new(1e5,0,1e5)
+	bv.Velocity = dir * Config.DashPower
+
+	task.delay(.18, function()
+		bv:Destroy()
+		debris(root.Position)
+		root.Velocity += Vector3.new(0,30,0) -- chain hop
+		label.Text = "READY"
+	end)
+end
+
+--// PUNCH + COMBO
+local lastPunch = 0
+local combo = 0
+local function punch()
+	if tick() - lastPunch > .6 then combo = 0 end
+	if tick() - lastPunch < .25 then return end
+	lastPunch = tick()
+	combo = math.clamp(combo + 1, 1, 3)
+
+	local anim = Instance.new("Animation")
+	anim.AnimationId = "rbxassetid://4947108314"
+	hum:LoadAnimation(anim):Play()
+
+	debris(root.Position)
+	sub.Text = "COMBO "..combo
+end
+
+--// PROFILE SWITCH
+local function setProfile(name)
+	loadProfile(name)
+	label.Text = name
+	sub.Text = "PROFILE"
+	LockOn.Target = Config.LockOn and findTarget() or nil
+end
+
+--// INPUT
+UIS.InputBegan:Connect(function(i,gp)
+	if gp then return end
+	if i.KeyCode.Name == Config.Keybind then dash() end
+	if i.KeyCode == Enum.KeyCode.E then punch() end
+	if i.KeyCode == Enum.KeyCode.R then
+		Config.LockOn = not Config.LockOn
+		LockOn.Target = Config.LockOn and findTarget() or nil
+		saveProfile()
+	end
+	if i.KeyCode == Enum.KeyCode.One  then setProfile("Default") end
+	if i.KeyCode == Enum.KeyCode.Two  then setProfile("PvP")     end
+	if i.KeyCode == Enum.KeyCode.Three then setProfile("Speed")   end
+	if i.KeyCode == Enum.KeyCode.Four then setProfile("Test")    end
+end)
+
+--// INIT
+label.Text = "READY"
+sub.Text = "DEFAULT"
