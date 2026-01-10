@@ -1,0 +1,244 @@
+--[[
+  Full M-FT System
+  - XP-based unlocks
+  - Skill Tree
+  - Dash & Wall-run
+  - Camera Shake & Visuals
+  - Mobile Dash & Jump
+  - Save/Load with DataStore
+--]]
+
+-- SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Debris = game:GetService("Debris")
+local DataStoreService = game:GetService("DataStoreService")
+local XPStore = DataStoreService:GetDataStore("MFT_XP")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+local cam = workspace.CurrentCamera
+
+-- CONFIG
+local Config = {
+	WalkSpeed = 16,
+	JumpPower = 50,
+	DashPower = 60,
+	DashCooldown = 1,
+	MobileUI = true,
+	WallRunUnlocked = false
+}
+
+-- STATE
+local LastDash = 0
+local DashEnabled = true
+local WallRunning = false
+local PlayerXP = 0
+
+-- ===============================
+-- SAVE / LOAD
+-- ===============================
+local function LoadXP()
+	local success, data = pcall(function()
+		return XPStore:GetAsync(player.UserId)
+	end)
+	PlayerXP = (success and data) or 0
+end
+local function SaveXP()
+	pcall(function()
+		XPStore:SetAsync(player.UserId, PlayerXP)
+	end)
+end
+
+player:WaitForChild("PlayerGui")
+LoadXP()
+game:BindToClose(SaveXP)
+
+-- ===============================
+-- CORE FUNCTIONS
+-- ===============================
+local function AddXP(amount)
+	PlayerXP += amount
+	ShakeCamera(amount >= 5 and 2 or 0.5, 0.15)
+end
+
+local function Dash()
+	if not DashEnabled then return end
+	if tick() - LastDash < Config.DashCooldown then return end
+	LastDash = tick()
+
+	local bv = Instance.new("BodyVelocity")
+	bv.MaxForce = Vector3.new(1e5,0,1e5)
+	bv.Velocity = root.CFrame.LookVector * Config.DashPower
+	bv.Parent = root
+	Debris:AddItem(bv,0.25)
+
+	AddXP(5)
+	DashEffect()
+end
+
+local function WallRun(direction)
+	if not Config.WallRunUnlocked then return end
+	WallRunning = true
+	local bv = Instance.new("BodyVelocity")
+	bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+	bv.Velocity = direction * Config.WalkSpeed
+	bv.Parent = root
+	Debris:AddItem(bv,0.5)
+
+	AddXP(10)
+	WallRunTrail()
+end
+
+-- ===============================
+-- VISUALS
+-- ===============================
+function DashEffect()
+	local part = Instance.new("Part")
+  part.Size = Vector3.new(1,1,1)
+	part.CFrame = root.CFrame
+	part.Anchored = true
+	part.CanCollide = false
+	part.Material = Enum.Material.Neon
+	part.Color = Color3.fromRGB(0,255,255)
+	part.Parent = workspace
+	Debris:AddItem(part,0.3)
+end
+
+function WallRunTrail()
+	local trail = Instance.new("Trail")
+	trail.Attachment0 = Instance.new("Attachment", root)
+	trail.Attachment1 = Instance.new("Attachment", root)
+	trail.Lifetime = 0.4
+	trail.Color = ColorSequence.new(Color3.fromRGB(255,255,0))
+	trail.Parent = root
+	Debris:AddItem(trail,0.5)
+end
+
+function ShakeCamera(intensity, duration)
+	if intensity <= 0 then return end
+	local startPos = cam.CFrame.Position
+	local t = 0
+	local conn
+	conn = RunService.RenderStepped:Connect(function(dt)
+		t += dt
+		if t > duration then
+			cam.CFrame = CFrame.new(startPos)
+			conn:Disconnect()
+			return
+		end
+		cam.CFrame = cam.CFrame * CFrame.new(
+			math.random(-intensity,intensity)/10,
+			math.random(-intensity,intensity)/10,
+			0
+		)
+	end)
+end
+
+-- ===============================
+-- MOBILE UI
+-- ===============================
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "MFT_GUI"
+
+-- Dash Button
+local dashButton = Instance.new("TextButton", gui)
+dashButton.Size = UDim2.fromOffset(80,80)
+dashButton.Position = UDim2.new(1,-100,1,-120)
+dashButton.Text = "DASH"
+dashButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+dashButton.TextColor3 = Color3.new(1,1,1)
+
+-- Jump Button
+local jumpButton = Instance.new("TextButton", gui)
+jumpButton.Size = UDim2.fromOffset(80,80)
+jumpButton.Position = UDim2.new(1,-200,1,-120)
+jumpButton.Text = "JUMP"
+jumpButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+jumpButton.TextColor3 = Color3.new(1,1,1)
+
+dashButton.MouseButton1Click:Connect(Dash)
+jumpButton.MouseButton1Click:Connect(function()
+	if humanoid then humanoid.Jump = true end
+end)
+
+RunService.RenderStepped:Connect(function()
+	local show = UserInputService.TouchEnabled and Config.MobileUI
+	dashButton.Visible = show
+	jumpButton.Visible = show
+end)
+
+-- ===============================
+-- GUI PANEL / Skill Tree
+-- ===============================
+local icon = Instance.new("TextButton", gui)
+icon.Size = UDim2.fromOffset(50,50)
+icon.Position = UDim2.new(0,10,0.5,-25)
+icon.Text = "M-FT"
+
+local panel = Instance.new("Frame", gui)
+panel.Size = UDim2.fromOffset(260,300)
+panel.Position = UDim2.new(0,70,0.5,-150)
+panel.Visible = false
+
+icon.MouseButton1Click:Connect(function()
+	panel.Visible = not panel.Visible
+end)
+
+local dashToggle = Instance.new("TextButton", panel)
+dashToggle.Position = UDim2.fromOffset(20,60)
+dashToggle.Size = UDim2.fromOffset(220,40)
+dashToggle.Text = "Dash: ON"
+dashToggle.MouseButton1Click:Connect(function()
+	DashEnabled = not DashEnabled
+	dashToggle.Text = "Dash: " .. (DashEnabled and "ON" or "OFF")
+end)
+
+-- Skill Tree
+local skillPanel = Instance.new("Frame", gui)
+skillPanel.Size = UDim2.fromOffset(200,250)
+skillPanel.Position = UDim2.new(0.5,-100,0.5,-125)
+skillPanel.Visible = false
+
+local skillButton = Instance.new("TextButton", gui)
+skillButton.Text = "Skill Tree"
+skillButton.Position = UDim2.new(0,10,0.5,50)
+skillButton.Size = UDim2.fromOffset(100,40)
+skillButton.MouseButton1Click:Connect(function()
+	skillPanel.Visible = not skillPanel.Visible
+end)
+
+local skills = {
+	{ Name="Wall-Run", XP=50, Action=function() Config.WallRunUnlocked=true end },
+	{ Name="Dash+10", XP=30, Action=function() Config.DashPower+=10 end }
+}
+
+local y=10
+for _, skill in pairs(skills) do
+	local btn = Instance.new("TextButton", skillPanel)
+	btn.Size = UDim2.fromOffset(180,30)
+	btn.Position = UDim2.fromOffset(10,y)
+	btn.Text = skill.Name.." ("..skill.XP.." XP)"
+	y+=35
+	btn.MouseButton1Click:Connect(function()
+		if PlayerXP >= skill.XP then
+			skills.Action = skill.Action
+			skill.Action()
+			PlayerXP -= skill.XP
+			btn.Text = skill.Name.." (Unlocked)"
+		end
+	end)
+end
+
+-- ===============================
+-- KEYBOARD DASH
+-- ===============================
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		Dash()
+	end
+end)
