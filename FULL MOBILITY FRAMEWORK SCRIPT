@@ -1,0 +1,96 @@
+--// Mobility Framework v1
+--// Client-side (LocalScript)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+--// CONFIG
+local CONFIG = {
+	Dash = {
+		Force = 80,
+		Duration = 0.18,
+		Cooldown = 1.2,
+		StaminaCost = 20,
+},
+	Stamina = {
+		Max = 100,
+		RegenRate = 18, -- per second
+	},
+}
+
+--// STATE
+local stamina = CONFIG.Stamina.Max
+local canDash = true
+local lastMoveDir = Vector3.new(0,0,-1)
+
+--// BODY VELOCITY
+local function applyVelocity(direction, force, duration)
+	local bv = Instance.new("BodyVelocity")
+	bv.MaxForce = Vector3.new(1e6, 0, 1e6)
+	bv.Velocity = direction * force
+	bv.Parent = rootPart
+
+	Debris:AddItem(bv, duration)
+end
+
+--// STAMINA REGEN
+RunService.Heartbeat:Connect(function(dt)
+	if stamina < CONFIG.Stamina.Max then
+		stamina += CONFIG.Stamina.RegenRate * dt
+		stamina = math.clamp(stamina, 0, CONFIG.Stamina.Max)
+	end
+end)
+
+--// GET MOVE DIRECTION
+local function getMoveDirection()
+	local cam = workspace.CurrentCamera
+	local moveDir = humanoid.MoveDirection
+
+	if moveDir.Magnitude > 0 then
+		lastMoveDir = moveDir.Unit
+	end
+
+	return lastMoveDir.Magnitude > 0 and lastMoveDir or cam.CFrame.LookVector
+end
+
+--// DASH
+local function dash()
+	if not canDash then return end
+	if stamina < CONFIG.Dash.StaminaCost then return end
+
+	canDash = false
+	stamina -= CONFIG.Dash.StaminaCost
+
+	local direction = getMoveDirection()
+	applyVelocity(direction, CONFIG.Dash.Force, CONFIG.Dash.Duration)
+
+	task.delay(CONFIG.Dash.Cooldown, function()
+		canDash = true
+	end)
+end
+
+
+--// INPUT
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+
+	if input.KeyCode == Enum.KeyCode.Q then
+		dash()
+	end
+end)
+
+--// CHARACTER RESPAWN SUPPORT
+player.CharacterAdded:Connect(function(char)
+	character = char
+	humanoid = char:WaitForChild("Humanoid")
+	rootPart = char:WaitForChild("HumanoidRootPart")
+end)
+
+print("✅ Mobility Framework Loaded")
