@@ -1,0 +1,216 @@
+--// M-FT Mobility Framework v2
+--// LocalScript | Roblox Studio Ready
+
+-- SERVICES
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+
+-- PLAYER
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local root = char:WaitForChild("HumanoidRootPart")
+
+--================ CONFIG PROFILES =================--
+local Profiles = {
+	Default = {
+		DashForce = 80,
+		DashCooldown = 1.2,
+    SprintSpeed = 22,
+		SlideForce = 65,
+		DoubleJumpForce = 55,
+		WallJumpForce = 70,
+		MaxAirDash = 1,
+		StaminaMax = 100,
+	},
+	Speed = {
+		DashForce = 120,
+		DashCooldown = 0.6,
+		SprintSpeed = 30,
+		SlideForce = 90,
+		DoubleJumpForce = 70,
+		WallJumpForce = 95,
+		MaxAirDash = 2,
+		StaminaMax = 140,
+	},
+	PVP = {
+		DashForce = 70,
+		DashCooldown = 1.5,
+    SprintSpeed = 20,
+		SlideForce = 60,
+		DoubleJumpForce = 45,
+		WallJumpForce = 60,
+		MaxAirDash = 1,
+		StaminaMax = 90,8
+  },
+	Test = {
+		DashForce = 200,
+    DashCooldown = 0,
+		SprintSpeed = 40,
+		SlideForce = 150,
+		DoubleJumpForce = 120,
+		WallJumpForce = 150,
+		MaxAirDash = 99,
+		StaminaMax = 999,
+	}
+}
+
+local Active = table.clone(Profiles.Default)
+
+--================ STATE =================--
+local stamina = Active.StaminaMax
+local canDash = true
+local airDashCount = 0
+local jumpCount = 0
+local sprinting = false
+local mobileUIEnabled = false
+local lastDir = Vector3.new(0,0,-1)
+
+--================ UTILS =================--
+local function applyVelocity(dir, force, dur)
+	local bv = Instance.new("BodyVelocity")
+	bv.MaxForce = Vector3.new(1e6,1e6,1e6)
+	bv.Velocity = dir * force
+	bv.Parent = root
+	Debris:AddItem(bv, dur)
+end
+
+local function grounded()
+	return humanoid.FloorMaterial ~= Enum.Material.Air
+end
+
+--================ MOBILITY =================--
+local function dash()
+	if not canDash then return end
+	if not grounded() then
+		if airDashCount >= Active.MaxAirDash then return end
+		airDashCount += 1
+end
+
+	canDash = false
+	local dir = humanoid.MoveDirection.Magnitude > 0 and humanoid.MoveDirection or root.CFrame.LookVector
+	applyVelocity(dir, Active.DashForce, 0.18)
+
+	task.delay(Active.DashCooldown,function()
+		canDash = true
+	end)
+end
+
+local function slide()
+	if not grounded() then return end
+	local dir = root.CFrame.LookVector
+	applyVelocity(dir, Active.SlideForce, 0.4)
+end
+
+local function wallJump()
+	local dir = -root.CFrame.LookVector + Vector3.new(0,1,0)
+	applyVelocity(dir.Unit, Active.WallJumpForce, 0.25)
+end
+
+-- DOUBLE JUMP
+humanoid.Jumping:Connect(function(active)
+	if active and not grounded() then
+		if jumpCount < 1 then
+			jumpCount += 1
+			applyVelocity(Vector3.new(0,1,0), Active.DoubleJumpForce, 0.25)
+		end
+	end
+end)
+
+-- RESET AIR
+RunService.Heartbeat:Connect(function()
+	if grounded() then
+		jumpCount = 0
+		airDashCount = 0
+	end
+end)
+
+--================ INPUT =================--
+UserInputService.InputBegan:Connect(function(input,gpe)
+	if gpe then return end
+
+	if input.KeyCode == Enum.KeyCode.Q then dash() end
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		sprinting = true
+		humanoid.WalkSpeed = Active.SprintSpeed
+	end
+	if input.KeyCode == Enum.KeyCode.C then slide() end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		sprinting = false
+		humanoid.WalkSpeed = 16
+	end
+end)
+
+--================ GUI =================--
+local gui = Instance.new("ScreenGui",player.PlayerGui)
+gui.Name = "MFT_GUI"
+
+-- ICON
+local icon = Instance.new("TextButton",gui)
+icon.Text = "M-FT"
+icon.Size = UDim2.fromOffset(70,30)
+icon.Position = UDim2.fromScale(0.02,0.5)
+icon.BackgroundColor3 = Color3.fromRGB(30,30,30)
+icon.TextColor3 = Color3.new(1,1,1)
+
+-- PANEL
+local panel = Instance.new("Frame",gui)
+panel.Size = UDim2.fromOffset(260,320)
+panel.Position = UDim2.fromScale(0.1,0.3)
+panel.BackgroundColor3 = Color3.fromRGB(20,20,20)
+panel.Visible = false
+
+icon.MouseButton1Click:Connect(function()
+	panel.Visible = not panel.Visible
+end)
+
+-- PROFILE BUTTONS
+local y = 10
+for name,_ in pairs(Profiles) do
+	local b = Instance.new("TextButton",panel)
+	b.Size = UDim2.new(1,-20,0,30)
+	b.Position = UDim2.fromOffset(10,y)
+	b.Text = name
+	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	b.TextColor3 = Color3.new(1,1,1)
+	y += 35
+
+	b.MouseButton1Click:Connect(function()
+		Active = table.clone(Profiles[name])
+		stamina = Active.StaminaMax
+	end)
+end
+
+-- MOBILE TOGGLE
+local mobileBtn = Instance.new("TextButton",panel)
+mobileBtn.Size = UDim2.new(1,-20,0,30)
+mobileBtn.Position = UDim2.fromOffset(10,y+10)
+mobileBtn.Text = "Toggle Mobile UI"
+mobileBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+mobileBtn.TextColor3 = Color3.new(1,1,1)
+
+mobileBtn.MouseButton1Click:Connect(function()
+	mobileUIEnabled = not mobileUIEnabled
+end)
+
+--================ MOBILE DASH BUTTON =================--
+local mobileDash = Instance.new("TextButton",gui)
+mobileDash.Size = UDim2.fromOffset(80,80)
+mobileDash.Position = UDim2.fromScale(0.8,0.7)
+mobileDash.Text = "DASH"
+mobileDash.Visible = false
+mobileDash.BackgroundColor3 = Color3.fromRGB(80,80,80)
+mobileDash.TextColor3 = Color3.new(1,1,1)
+
+mobileDash.MouseButton1Click:Connect(dash)
+
+RunService.Heartbeat:Connect(function()
+	mobileDash.Visible = mobileUIEnabled and UserInputService.TouchEnabled
+end)
+
+print("✅ M-FT Mobility Framework Loaded")
